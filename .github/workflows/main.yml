@@ -1,0 +1,66 @@
+name: Windows - LiteManager Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup_litemanager:
+    name: Setting up LiteManager
+    runs-on: windows-latest
+    # Optional: Add a timeout if needed, but often not necessary for this type of setup
+    # timeout-minutes: 30
+
+    steps:
+      # Step 1: Checkout your repository
+      # Ensure your repository is accessible and the files exist.
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Download and Install LiteManager
+      # This step assumes 'Downloads.bat' is responsible for downloading and installing LM.
+      # We'll use PowerShell for Invoke-WebRequest and then execute the batch file.
+      - name: Download and Install LiteManager
+        run: |
+          # Define the URL for the batch script
+          $downloadUrl = "https://raw.githubusercontent.com/chamod12/lm_win-10_github_rdp/main/Downloads.bat"
+          $localScriptPath = "Downloads.bat"
+
+          Write-Host "Attempting to download script from: $downloadUrl"
+          
+          # Download the script using Invoke-WebRequest
+          # -UseBasicParsing is good for CI environments.
+          # Check for errors during download.
+          try {
+              Invoke-WebRequest -Uri $downloadUrl -OutFile $localScriptPath -UseBasicParsing -ErrorAction Stop
+              Write-Host "Successfully downloaded script to: $localScriptPath"
+          } catch {
+              Write-Error "Failed to download script: $($_.Exception.Message)"
+              # Exit with a non-zero code to fail the workflow step
+              exit 1 
+          }
+
+          Write-Host "Executing Downloads.bat..."
+          # Execute the downloaded batch script using cmd.exe
+          # 'shell: cmd' ensures it's run by cmd.exe
+          cmd /c $localScriptPath
+          
+          # Check the exit code of the batch script. If non-zero, the script failed.
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Downloads.bat exited with error code: $LASTEXITCODE"
+              exit 1
+          } else {
+              Write-Host "Downloads.bat executed successfully."
+          }
+        shell: powershell # Use PowerShell as the primary shell for Invoke-WebRequest and try/catch
+
+      # Step 3: Connect to LiteManager (assuming show.bat handles this)
+      # Ensure show.bat exists and is executable.
+      - name: Connect to LiteManager
+        run: cmd /c show.bat
+        shell: cmd # Explicitly use cmd shell for batch files
+
+      # Step 4: Run the Time Counter (assuming loop.bat handles this)
+      # Ensure loop.bat exists and is executable.
+      - name: Run Time Counter
+        run: cmd /c loop.bat
+        shell: cmd # Explicitly use cmd shell for batch files
