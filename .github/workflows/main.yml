@@ -1,0 +1,41 @@
+name: Windows - LiteManager Setup
+
+on:
+  workflow_dispatch: # Allows you to manually trigger this workflow
+
+jobs:
+  setup_litemanager:
+    name: Setting up LiteManager
+    runs-on: windows-latest # Specifies the runner OS
+
+    steps:
+      # Step 1: Checkout your repository
+      # This is crucial to get any scripts you might have in your repo (like Downloads.bat, show.bat, loop.bat)
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Download and Execute the LiteManager Setup Script
+      # This step assumes 'Downloads.bat' is a script that installs LiteManager.
+      # We use PowerShell's Invoke-WebRequest for downloading, and then execute the batch file.
+      - name: Download and Install LiteManager
+        run: |
+          # Download the main setup script (e.g., Downloads.bat) from GitHub
+          # The -UseBasicParsing is often recommended for compatibility with CI environments.
+          Invoke-WebRequest -Uri "https://raw.githubusercontent.com/chamod12/lm_win-10_github_rdp/main/Downloads.bat" -OutFile "Downloads.bat" -UseBasicParsing
+
+          # Execute the downloaded batch script to install LiteManager
+          # The `shell: cmd` ensures it's run with cmd.exe, which is necessary for .bat files.
+          cmd /c Downloads.bat
+        shell: powershell # Use powershell as the primary shell for Invoke-WebRequest
+
+      # Step 3: Connect to LiteManager (assuming show.bat handles this)
+      # This step runs the 'show.bat' script.
+      - name: Connect to LiteManager
+        run: cmd /c show.bat
+        shell: cmd # Explicitly use cmd shell for batch files
+
+      # Step 4: Run the Time Counter (assuming loop.bat handles this)
+      # This step runs the 'loop.bat' script.
+      - name: Run Time Counter
+        run: cmd /c loop.bat
+        shell: cmd # Explicitly use cmd shell for batch files
